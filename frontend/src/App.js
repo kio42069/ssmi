@@ -7,27 +7,47 @@ function App() {
   const [chartData, setChartData] = useState([]);
 
   useEffect(() => {
-    const fetchData = () => {
+    // Function to fetch data for the table
+    const fetchTableData = () => {
       axios
         .get("http://localhost:5000/api/time-tracking")
         .then((response) => {
           setData(response.data);
-
-          // Prepare data for the pie chart
-          const chartData = response.data.map((row) => ({
-            name: row.window_name,
-            value: row.time_spent,
-          }));
-          setChartData(chartData);
         })
         .catch((error) => {
-          console.error("Error fetching data:", error);
+          console.error("Error fetching table data:", error);
         });
     };
 
-    fetchData();
-    const interval = setInterval(fetchData, 5000);
-    return () => clearInterval(interval);
+    // Function to fetch data for the chart
+    const fetchChartData = () => {
+      axios
+        .get("http://localhost:5000/api/time-tracking")
+        .then((response) => {
+          const newChartData = response.data.map((row) => ({
+            name: row.window_name,
+            value: row.time_spent,
+          }));
+          setChartData(newChartData);
+        })
+        .catch((error) => {
+          console.error("Error fetching chart data:", error);
+        });
+    };
+
+    // Fetch table data every second
+    fetchTableData();
+    const tableInterval = setInterval(fetchTableData, 1000);
+
+    // Fetch chart data every 10 seconds
+    fetchChartData();
+    const chartInterval = setInterval(fetchChartData, 10000);
+
+    // Cleanup intervals on component unmount
+    return () => {
+      clearInterval(tableInterval);
+      clearInterval(chartInterval);
+    };
   }, []);
 
   const formatTime = (seconds) => {
